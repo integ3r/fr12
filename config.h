@@ -8,7 +8,9 @@
 #define FR12_CONFIG_H
 
 #include "defs.h"
+
 #include "lcd.h"
+#include "net.h"
 
 // FR 12 classes
 class fr12_union_station;
@@ -34,16 +36,10 @@ struct fr12_union_station_serialized {
 }
 __attribute__ ((packed));
 
-struct fr12_lcd_serialized_header {
-  uint8_t flags;
-  uint32_t interval;
-}
-__attribute__ ((packed));
-
 // LCD
 struct fr12_lcd_serialized {
-  fr12_lcd_serialized_header header;
-  fr12_lcd_message messages[fr12_lcd_message_count];
+  uint8_t flags;
+  fr12_lcd_message msg;
 }
 __attribute__ ((packed));
 
@@ -51,10 +47,10 @@ __attribute__ ((packed));
 struct fr12_net_serialized {
   uint8_t flags;
   uint8_t mac[6];
-  uint8_t ip[4];
-  uint8_t dns[4];
-  uint8_t gateway[4];
-  uint8_t subnet[4];
+  IPAddress ip;
+  IPAddress dns;
+  IPAddress gateway;
+  IPAddress subnet;
 }
 __attribute__ ((packed));
 
@@ -102,8 +98,7 @@ protected:
   // Readers
   fr12_eeprom_header *read_header();
   fr12_union_station_serialized *read_union_station();
-  fr12_lcd_serialized_header *read_lcd();
-  fr12_lcd_message *read_lcd_message(size_t index);
+  fr12_lcd_serialized *read_lcd();
   fr12_net_serialized *read_net();
   fr12_ntp_serialized *read_ntp();
   fr12_time_serialized *read_time();
@@ -111,8 +106,7 @@ protected:
   // Writers
   void write_header(fr12_eeprom_header *header);
   void write_union_station(fr12_union_station_serialized *union_station);
-  void write_lcd(fr12_lcd_serialized_header *lcd);
-  void write_lcd_message(fr12_lcd_message *msg, size_t index);
+  void write_lcd(fr12_lcd_serialized *lcd);
   void write_net(fr12_net_serialized *net);
   void write_ntp(fr12_ntp_serialized *ntp);
   void write_time(fr12_time_serialized *time);

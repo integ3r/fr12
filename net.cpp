@@ -79,35 +79,31 @@ uint8_t fr12_net::get_flags() {
 void fr12_net::configure(fr12_net_serialized *ee) {
   this->flags = ee->flags;
   memcpy(this->mac, ee->mac, sizeof(ee->mac));
+  // IP
   this->ip = IPAddress(ee->ip[0], ee->ip[1], ee->ip[2], ee->ip[3]);
+  
+  // DNS
   this->dns = IPAddress(ee->dns[0], ee->dns[1], ee->dns[2], ee->dns[3]);
+  
+  // Gateway
   this->gateway = IPAddress(ee->gateway[0], ee->gateway[1], ee->gateway[2], ee->gateway[3]);
+  
+  // Subnet
   this->subnet = IPAddress(ee->subnet[0], ee->subnet[1], ee->subnet[2], ee->subnet[3]);
 }
 
 void fr12_net::serialize(fr12_net_serialized *ee) {
+  // Flags
   ee->flags = this->flags;
-  memcpy(ee->mac, this->mac, sizeof(ee->mac));
   
-  ee->ip[0] = this->ip[0];
-  ee->ip[1] = this->ip[1];
-  ee->ip[2] = this->ip[2];
-  ee->ip[3] = this->ip[3];
+  // MAC
+  memcpy(&ee->mac, &this->mac, sizeof(ee->mac));
   
-  ee->dns[0] = this->dns[0];
-  ee->dns[1] = this->dns[1];
-  ee->dns[2] = this->dns[2];
-  ee->dns[3] = this->dns[3];
-  
-  ee->gateway[0] = this->gateway[0];
-  ee->gateway[1] = this->gateway[1];
-  ee->gateway[2] = this->gateway[2];
-  ee->gateway[3] = this->gateway[3];
-  
-  ee->subnet[0] = this->subnet[0];
-  ee->subnet[1] = this->subnet[1];
-  ee->subnet[2] = this->subnet[2];
-  ee->subnet[3] = this->subnet[3];
+  // IP, DNS, gateway, subnet
+  ee->ip = this->ip;
+  ee->dns = this->dns;
+  ee->gateway = this->gateway;
+  ee->subnet = this->subnet;
 }
 
 void fr12_net::handle_http() {
@@ -239,18 +235,51 @@ void fr12_net::http_respond(EthernetClient *client, uint16_t response_code, cons
 
 void fr12_net::http_respond_json(EthernetClient *client, uint16_t response_code, const char **data, size_t data_length, const char **headers, size_t header_length) {
   this->http_send_headers(client, response_code, "application/json", headers, header_length);
-  client->print("{\"data\":[");
+  client->print("{\"version\":\"" FR12_VERSION "\",\"data\":");
   if (data != NULL) {
+    client->write('[');
     for(size_t i = 0; i < data_length; i++) {
+      uint8_t write = 0;
       client->write('"');
-      client->print(data[i]);
+      switch (data[i]) {
+        case '"':
+        case '\\':
+          client->write('\\');
+        default:
+          write = 1;
+          break;
+        case '\b':
+          client->print("\\b");
+          break;
+        case '\f':
+          client->print("\\f");
+          break;
+        case '\n':
+          client->print("\\n");
+          break;
+        case '\r':
+          client->print("\\r");
+          break;
+        case '\t':
+          client->print("\\t");
+          break;
+        case '\v':
+          client->print("\\v");
+          break;
+      }
+      if (write) {
+        client->print(data[i]);
+      }
       client->write('"');
       if (i < data_length - 1) {
         client->write(',');
       }
     }
+    client->write(']');
+  } else {
+    client->print(response_code);
   }
-  client->print("]}");
+  client->write('}');
 
   client->println();
   client->flush();

@@ -20,7 +20,6 @@ class fr12_lcd;
 
 // Serialization structs
 struct fr12_lcd_serialized;
-struct fr12_lcd_serialized_header;
 
 // Pins
 enum {
@@ -60,7 +59,7 @@ enum {
 
 // Mesages
 struct fr12_lcd_message {
-  uint8_t msg[fr12_lcd_width * fr12_lcd_height];
+  uint8_t text[fr12_lcd_width * fr12_lcd_height];
   uint8_t r, g, b;
 } __attribute__ ((packed));
 
@@ -76,12 +75,8 @@ public:
   uint8_t begin();
   
   // Configuration
-  void configure(fr12_lcd_serialized_header *ee);
-  void serialize(fr12_lcd_serialized_header *ee);
-  void serialize_message(fr12_lcd_message *msg);
-  
-  // Picking
-  void next();
+  void configure(fr12_lcd_serialized *ee);
+  void serialize(fr12_lcd_serialized *ee);
   
   // Setters
   void set_color(uint8_t r, uint8_t g, uint8_t b);
@@ -91,7 +86,6 @@ public:
   void print_wrap(char *msg);
   
   // Getters
-  uint32_t get_interval();
   fr12_lcd_message *get_message();
 private:
   // Puts a wrapped string to the LCD
@@ -103,10 +97,8 @@ private:
   // Current X and Y positions
   size_t x, y;
   
-  // Random message stuff
+  // Message information
   uint8_t flags;
-  uint32_t interval;
-  size_t index;
   
   // Configuration pointer
   fr12_config *config;

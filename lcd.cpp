@@ -12,17 +12,13 @@ fr12_lcd::fr12_lcd(fr12_config *config) {
   this->config = config;
   this->hw = NULL;
   this->msg.r = this->msg.g = this->msg.b = 0xff;
-  this->index = 0;
   
   // X, Y, flags, etc
   this->x = this->y = 0;
   this->flags = fr12_lcd_auto;
  
   // Clear the message
-  memset(this->msg.msg, 0x00, sizeof(this->msg.msg));
-  
-  // Seed random number generator with noise
-  srand(analogRead(0) * analogRead(1));
+  memset(this->msg.text, 0x00, sizeof(this->msg.text));
 }
 
 fr12_lcd::~fr12_lcd() {
@@ -41,7 +37,7 @@ uint8_t fr12_lcd::begin() {
   this->hw->begin(fr12_lcd_width, fr12_lcd_height);
 
   // Set up the color pins
-  this->set_color(255, 255, 255);
+  this->set_color(this->msg.r, this->msg.g, this->msg.b);
 
   // Clear the LCD
   this->hw->clear();
@@ -49,37 +45,14 @@ uint8_t fr12_lcd::begin() {
   return 0;
 }
 
-void fr12_lcd::configure(fr12_lcd_serialized_header *ee) {
+void fr12_lcd::configure(fr12_lcd_serialized *ee) {
   this->flags = ee->flags;
-  this->interval = ee->interval;
+  this->set_message(&ee->msg);
 }
 
-void fr12_lcd::serialize(fr12_lcd_serialized_header *ee) {
+void fr12_lcd::serialize(fr12_lcd_serialized *ee) {
   ee->flags = this->flags;
-  ee->interval = this->interval;
-}
-
-void fr12_lcd::serialize_message(fr12_lcd_message *msg) {
-  memcpy(msg, &this->msg, sizeof(fr12_lcd_message));
-}
-
-void fr12_lcd::next() {
-  if (!(this->flags & fr12_lcd_auto)) {
-    return;
-  }
-
-  if (this->flags & fr12_lcd_random) {
-    this->index = rand() % fr12_lcd_message_count;
-  } 
-  else {
-    if (++this->index >= fr12_lcd_message_count) {
-      this->index = 0;
-    }
-  }
-
-  fr12_lcd_message *msg = this->config->read_lcd_message(this->index);
-  this->set_message(msg);
-  free(msg);
+  memcpy(&ee->msg, &this->msg, sizeof(fr12_lcd_message));
 }
 
 void fr12_lcd::set_color(uint8_t r, uint8_t g, uint8_t b) {
@@ -99,7 +72,7 @@ void fr12_lcd::set_message(fr12_lcd_message *message) {
   this->x = this->y = 0;
 
   // Print the message
-  this->print_wrap((char *)this->msg.msg);
+  this->print_wrap((char *)this->msg.text);
 
   // Set the backlight
   this->set_color(this->msg.r, this->msg.g, this->msg.b);
@@ -179,10 +152,6 @@ void fr12_lcd::putc_wrap(char c) {
     this->x = 0;
     this->hw->setCursor(this->x, ++this->y);
   }
-}
-
-uint32_t fr12_lcd::get_interval() {
-  return this->interval;
 }
 
 fr12_lcd_message *fr12_lcd::get_message() {

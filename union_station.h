@@ -12,7 +12,7 @@
 // Mixed variables
 enum {
   // Countdown
-  fr12_union_station_countdown_to = 1327629600L,
+  fr12_union_station_countdown_to = 1327626000L,
   
   // Configuration write interval
   fr12_union_station_config_write_interval = 5,
@@ -70,14 +70,13 @@ public:
   uint32_t sync_handler(fr12_time *time);
   void http_handler(fr12_net *net, EthernetClient *client, char *path);
 private:
-  // Utility
+  // Utilities
   void do_status_reset();
   void do_sync_ntp();
+  
+  // HTTP queries
   char *do_find_query(char *str);
   void do_break_query(char *str, char **key, char **value);
-  
-  // Last LCD switch
-  uint32_t lcd_switch;
   
   // Synchronization index
   uint16_t sync_index;

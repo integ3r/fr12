@@ -28,7 +28,6 @@
 fr12_union_station *fr12 = NULL;
 
 void setup() {
-  Serial.begin(115200);
   fr12 = new fr12_union_station();
   if (fr12) {
     fr12->setup();

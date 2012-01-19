@@ -22,7 +22,6 @@ fr12_union_station::fr12_union_station() {
   this->ntp = new fr12_ntp();
   this->time = new fr12_time();
   this->countdown = NULL;
-  this->lcd_switch = 0;
   this->sync_index = 1;
   this->flags = 0;
 }
@@ -43,7 +42,7 @@ void fr12_union_station::setup() {
 
   // Set initial message
   fr12_lcd_message msg;
-  strcpy_P((char *)&msg.msg, PSTR("Froshduino " FR12_VERSION));
+  strcpy_P((char *)&msg.text, PSTR("Froshduino " FR12_VERSION));
   msg.r = msg.g = msg.b = 0xff;
   this->lcd->set_message(&msg);
 
@@ -133,7 +132,7 @@ void fr12_union_station::setup() {
   this->glcd->hw->ClearScreen();
   this->glcd->status->ClearArea();
   this->glcd->title->Puts_P(PSTR("FR 12"));
-  this->glcd->caption->Puts_P(PSTR("countdown"));
+  this->glcd->caption->Puts_P(PSTR("COUNTDOWN!"));
   this->do_status_reset();
 }
 
@@ -146,16 +145,18 @@ void fr12_union_station::loop() {
     this->countdown->update(this->time);
 
     // Are we there yet?
-    this->glcd->countdown->CursorToXY(0, 0);
-    this->glcd->countdown->write(' ');
     if (this->countdown->target_reached()) {
       // boom shaka laka
       this->glcd->countdown->ClearArea();
       
       // font optimization
-      this->glcd->countdown->Puts_P(PSTR("RIGHT NOW!"));
+      this->glcd->countdown->Puts_P(PSTR(" RIGHT NOW!"));
     } 
     else {
+      // Start at the beginning of the string
+      this->glcd->countdown->CursorToXY(0, 0);
+      this->glcd->countdown->write(' ');
+    
       // Display results based upon colon
       if (this->flags & fr12_union_station_colon) {
         this->glcd->countdown->Printf_P(PSTR("%.2u:%.2u:%.2u:%.2u.%.2u"), this->countdown->days, this->countdown->hours, this->countdown->mins, this->countdown->secs, this->countdown->millis / 10);
@@ -166,11 +167,6 @@ void fr12_union_station::loop() {
     }
   }
 
-  // Decide if we should advance the LCD
-  if (millis() - this->lcd_switch >= this->lcd->get_interval()) {
-    this->lcd->next();
-    this->lcd_switch = millis();
-  }
 
   // Process Ethernet connections
   this->net->handle_http();
@@ -212,18 +208,7 @@ uint32_t fr12_union_station::sync_handler(fr12_time *time) {
 
 void fr12_union_station::http_handler(fr12_net *net, EthernetClient *client, char *path) {
   if (strcmp_P(path, "/") == 0) {
-    static char root[] PROGMEM = "<!DOCTYPE html>\n"
-      "<html>\n"
-      "<head>\n"
-      "</head>\n"
-      "<body>\n"
-      "</body>\n"
-      "</html>\n";
-
-    char response[sizeof(root)];
-    strncpy_P((char *)&response, root, sizeof(root));
-    net->http_respond(client, 200, (char *)&response, sizeof(root));
-
+    net->http_respond_json(client, 403); 
     return;
   } 
   char *c = strtok((char *)path, "/");
@@ -243,40 +228,43 @@ void fr12_union_station::http_handler(fr12_net *net, EthernetClient *client, cha
           return;
         }
         else if (strcasecmp_P(c, PSTR("lcd")) == 0) {
-          fr12_lcd_serialized_header header;
-          fr12_lcd_message msg;
-          char header_flags_str[5], header_interval_str[11];
+          fr12_lcd_serialized lcd;
+          char lcd_flags_str[4], lcd_r_str[4], lcd_g_str[4], lcd_b_str[4];
           char *arr[] = {
-            (char *)&header_flags_str,
-            (char *)&header_interval_str,
-            (char *)&msg.msg
+            (char *)&lcd_flags_str,
+            (char *)&lcd_r_str,
+            (char *)&lcd_g_str,
+            (char *)&lcd_b_str,
+            (char *)&lcd.msg.text
           };
-          this->lcd->serialize(&header);
-          this->lcd->serialize_message(&msg);
+          this->lcd->serialize(&lcd);
 
-          snprintf_P((char *)&header_flags_str, sizeof(header_flags_str), PSTR("0x%.2x"), header.flags);
-          snprintf_P((char *)&header_interval_str, sizeof(header_interval_str), PSTR("%u"), header.interval);
+          snprintf_P((char *)&lcd_flags_str, sizeof(lcd_flags_str), PSTR("%u"), lcd.flags);
+          snprintf_P((char *)&lcd_r_str, sizeof(lcd_r_str), PSTR("%u"), lcd.msg.r);
+          snprintf_P((char *)&lcd_g_str, sizeof(lcd_g_str), PSTR("%u"), lcd.msg.g);
+          snprintf_P((char *)&lcd_b_str, sizeof(lcd_b_str), PSTR("%u"), lcd.msg.b);
 
-          net->http_respond_json(client, 200, (const char **)arr, 3);
+          net->http_respond_json(client, 200, (const char **)arr, 5);
           return;
         } 
         else if (strcasecmp_P(c, PSTR("net")) == 0) {
-          IPAddress addresses[4];
-          uint8_t *mac = this->net->get_mac();
+          fr12_net_serialized network;
           char ip_str[16], dns_str[16], gateway_str[16], subnet_str[16], mac_str[18];
           char *arr[] = {
+            (char *)&mac_str,
             (char *)&ip_str,
             (char *)&dns_str,
             (char *)&gateway_str,
-            (char *)&subnet_str,
-            (char *)&mac_str
+            (char *)&subnet_str
           };
-          this->net->get_addresses((IPAddress *)&addresses);
-          snprintf_P((char *)&ip_str, sizeof(ip_str), PSTR("%u.%u.%u.%u"), addresses[0][0], addresses[0][1], addresses[0][2], addresses[0][3]);
-          snprintf_P((char *)&dns_str, sizeof(dns_str), PSTR("%u.%u.%u.%u"), addresses[1][0], addresses[1][1], addresses[1][2], addresses[1][3]);
-          snprintf_P((char *)&gateway_str, sizeof(gateway_str), PSTR("%u.%u.%u.%u"), addresses[2][0], addresses[2][1], addresses[2][2], addresses[2][3]);
-          snprintf_P((char *)&subnet_str, sizeof(subnet_str), PSTR("%u.%u.%u.%u"), addresses[3][0], addresses[3][1], addresses[3][2], addresses[3][3]);
-          snprintf_P((char *)&mac_str, sizeof(mac_str), PSTR("%.2x:%.2x:%.2x:%.2x:%.2x:%.2x"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], mac[6]);
+          this->net->serialize(&network);
+          
+          snprintf_P((char *)&mac_str, sizeof(mac_str), PSTR("%.2x:%.2x:%.2x:%.2x:%.2x:%.2x"), network.mac[0], network.mac[1], network.mac[2], network.mac[3], network.mac[4], network.mac[5], network.mac[6]);
+          snprintf_P((char *)&ip_str, sizeof(ip_str), PSTR("%u.%u.%u.%u"), network.ip[0], network.ip[1], network.ip[2], network.ip[3]);
+          snprintf_P((char *)&dns_str, sizeof(dns_str), PSTR("%u.%u.%u.%u"), network.dns[0], network.dns[1], network.dns[2], network.dns[3]);
+          snprintf_P((char *)&gateway_str, sizeof(gateway_str), PSTR("%u.%u.%u.%u"), network.gateway[0], network.gateway[1], network.gateway[2], network.gateway[3]);
+          snprintf_P((char *)&subnet_str, sizeof(subnet_str), PSTR("%u.%u.%u.%u"), network.subnet[0], network.subnet[1], network.subnet[2], network.subnet[3]);
+          
           net->http_respond_json(client, 200, (const char **)arr, 5);
           return;
         } 
@@ -341,12 +329,9 @@ void fr12_union_station::http_handler(fr12_net *net, EthernetClient *client, cha
         }
         else if (strcasecmp_P(c, PSTR("lcd")) == 0) {
           // Serialize LCD mesage and config
-          fr12_lcd_serialized_header lcd, old_lcd;
-          fr12_lcd_message msg, old_msg;
+          fr12_lcd_serialized lcd, old_lcd;
           this->lcd->serialize(&lcd);
-          this->lcd->serialize_message(&msg);
-          memcpy(&old_lcd, &lcd, sizeof(fr12_lcd_serialized_header));
-          memcpy(&old_msg, &msg, sizeof(fr12_lcd_message));
+          memcpy(&old_lcd, &lcd, sizeof(fr12_lcd_serialized));
 
           // Tokenize the query
           c = this->do_find_query(c);
@@ -357,34 +342,27 @@ void fr12_union_station::http_handler(fr12_net *net, EthernetClient *client, cha
             char *key, *value;
             this->do_break_query(c, &key, &value);
 
-            if (strcasecmp_P(key, PSTR("interval")) == 0) {
-              lcd.interval = strtoul(value, NULL, 0);
-            } 
-            else if (strcasecmp_P(key, PSTR("msg")) == 0) {
-              if (strlen(value) < sizeof(msg.msg)) {
-                strcpy((char *)&msg.msg, value);
+            if (strcasecmp_P(key, PSTR("msg")) == 0) {
+              if (strlen(value) < sizeof(lcd.msg.text)) {
+                strcpy((char *)&lcd.msg.text, value);
               }
             } 
             else if (strcasecmp_P(key, PSTR("r")) == 0) {
-              msg.r = (uint8_t)strtoul(value, NULL, 0);
+              lcd.msg.r = (uint8_t)strtoul(value, NULL, 0);
             } 
             else if (strcasecmp_P(key, PSTR("g")) == 0) {
-              msg.g = (uint8_t)strtoul(value, NULL, 0);
+              lcd.msg.g = (uint8_t)strtoul(value, NULL, 0);
             } 
             else if (strcasecmp_P(key, PSTR("b")) == 0) {
-              msg.b = (uint8_t)strtoul(value, NULL, 0);
+              lcd.msg.b = (uint8_t)strtoul(value, NULL, 0);
             }
 
             c = strtok(NULL, "&");
           }
 
           // Write settings (if different)
-          if (memcmp(&lcd, &old_lcd, sizeof(fr12_lcd_serialized_header)) != 0) {
+          if (memcmp(&lcd, &old_lcd, sizeof(fr12_lcd_serialized)) != 0) {
             this->config->write_lcd(&lcd);
-          }
-
-          if (memcmp(&msg, &old_msg, sizeof(fr12_lcd_message)) != 0) {
-            this->lcd->set_message(&msg);
           }
 
           net->http_respond_json(client, 200);
