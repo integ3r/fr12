@@ -20,7 +20,7 @@
 
 class fr12_union_station;
 
-#define FR12_VERSION "1.2.0"
-#define FR12_VERSION_NUMERIC 120
+#define FR12_VERSION "1.3"
+#define FR12_VERSION_NUMERIC 130
 
 #endif /* FR12_DEFS_H */

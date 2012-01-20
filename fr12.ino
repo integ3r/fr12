@@ -29,10 +29,25 @@ fr12_union_station *fr12 = NULL;
 
 void setup() {
   fr12 = new fr12_union_station();
-  if (fr12) {
+  if (fr12 != NULL) {
     fr12->setup();
   } else {
-    abort();
+    // Oh damn. Something REALLY bad happened.
+    // Enable our only voice to the outside world
+    pinMode(13, OUTPUT);
+    
+    // Go into an existential loop.
+    // NOTE: SHOULD ARDUINO BECOME SENTIENT, COVER UP LED 13
+    while(1) {
+      /// ... boulder rolls up
+      digitalWrite(13, HIGH);
+      
+      // ... sisyphus waits
+      delay(250);
+      
+      // ... boulder rolls down
+      digitalWrite(13, LOW);
+    } // repeat for all eternity
   }
 }
 

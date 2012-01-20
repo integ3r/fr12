@@ -7,15 +7,13 @@
 #include "lcd.h"
 #include "config.h"
 
-fr12_lcd::fr12_lcd(fr12_config *config) {
+fr12_lcd::fr12_lcd() {
   // Stuff. I'm tired. No comment.
-  this->config = config;
   this->hw = NULL;
   this->msg.r = this->msg.g = this->msg.b = 0xff;
   
   // X, Y, flags, etc
   this->x = this->y = 0;
-  this->flags = fr12_lcd_auto;
  
   // Clear the message
   memset(this->msg.text, 0x00, sizeof(this->msg.text));
@@ -46,12 +44,10 @@ uint8_t fr12_lcd::begin() {
 }
 
 void fr12_lcd::configure(fr12_lcd_serialized *ee) {
-  this->flags = ee->flags;
   this->set_message(&ee->msg);
 }
 
 void fr12_lcd::serialize(fr12_lcd_serialized *ee) {
-  ee->flags = this->flags;
   memcpy(&ee->msg, &this->msg, sizeof(fr12_lcd_message));
 }
 

@@ -15,8 +15,8 @@
 class LiquidCrystal;
 
 // FR 12 classes
-class fr12_config;
 class fr12_lcd;
+class fr12_config;
 
 // Serialization structs
 struct fr12_lcd_serialized;
@@ -42,19 +42,7 @@ enum {
 // Dimensions and message count
 enum {
   fr12_lcd_width = 16,
-  fr12_lcd_height = 2,
-  fr12_lcd_message_count = 50
-};
-
-// Flags
-enum {
-  fr12_lcd_auto = (1 << 0),
-  fr12_lcd_random = (1 << 1)
-};
-
-// Defaults
-enum {
-  fr12_lcd_interval = 5000UL
+  fr12_lcd_height = 2
 };
 
 // Mesages
@@ -66,7 +54,7 @@ struct fr12_lcd_message {
 class fr12_lcd {
 public:
   // Constructor
-  fr12_lcd(fr12_config *config);
+  fr12_lcd();
   
   // Destructor
   virtual ~fr12_lcd();
@@ -99,9 +87,6 @@ private:
   
   // Message information
   uint8_t flags;
-  
-  // Configuration pointer
-  fr12_config *config;
   
   // Hardware
   LiquidCrystal *hw;

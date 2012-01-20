@@ -38,7 +38,6 @@ __attribute__ ((packed));
 
 // LCD
 struct fr12_lcd_serialized {
-  uint8_t flags;
   fr12_lcd_message msg;
 }
 __attribute__ ((packed));
@@ -47,10 +46,10 @@ __attribute__ ((packed));
 struct fr12_net_serialized {
   uint8_t flags;
   uint8_t mac[6];
-  IPAddress ip;
-  IPAddress dns;
-  IPAddress gateway;
-  IPAddress subnet;
+  uint32_t ip;
+  uint32_t dns;
+  uint32_t gateway;
+  uint32_t subnet;
 }
 __attribute__ ((packed));
 
@@ -93,7 +92,6 @@ public:
   
   // Resets configuration
   void reset();
-  
 protected:
   // Readers
   fr12_eeprom_header *read_header();

@@ -56,9 +56,9 @@ void fr12_time::update() {
     this->flags |= fr12_time_should_sync;
     
     // If auto sync is enabled, do so
-    if (this->flags & fr12_time_auto_sync && this->auto_sync != NULL && this->union_station != NULL) {
-      // Sync and set the time
-      this->time_seconds = ((this->union_station)->*(this->auto_sync))(this);
+    if (this->flags & fr12_time_auto_sync && this->union_station != NULL && this->auto_sync != 0) {
+      // Sync
+      ((this->union_station)->*(this->auto_sync))();
       
       // Set the next sync time
       this->next_sync = this->time_seconds + this->sync_interval;

@@ -21,15 +21,15 @@ enum {
 };
 
 // FR 12 classes
-class fr12_union_station;
 class fr12_time;
 class fr12_countdown;
+class fr12_config;
 
 // Serialization structs
 struct fr12_time_serialized;
 
 // Time callback handler
-typedef uint32_t (fr12_union_station::*fr12_time_callback)(fr12_time *);
+typedef void (fr12_union_station::*fr12_time_callback)();
 
 class fr12_time {
 public:

@@ -28,6 +28,7 @@ enum {
 
 // FR 12 classes
 class fr12_ntp;
+class fr12_config;
 
 // Serialization structs
 struct fr12_ntp_serialized;

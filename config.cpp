@@ -36,6 +36,10 @@ void fr12_config::begin() {
   fr12_union_station_serialized *us = this->read_union_station();
   this->union_station->configure(us);
   free(us);
+  
+  fr12_lcd_serialized *lcd = this->read_lcd();
+  this->union_station->lcd->configure(lcd);
+  free(lcd);
 
   fr12_net_serialized *net = this->read_net();
   this->union_station->net->configure(net);
@@ -52,26 +56,34 @@ void fr12_config::begin() {
 
 void fr12_config::reset() {
   static fr12_eeprom ee PROGMEM = {
-    // Magic
-    fr12_config_magic,
+    // Header
+    {
+      // Magic
+      fr12_config_magic,
 
-    // Version
-    fr12_config_version,
+      // Version
+      fr12_config_version
+    },
 
     // Union Station
     { fr12_union_station_countdown_to },
 
     // LCD
-    { fr12_lcd_auto },
+    {
+      {
+        "Froshduino " FR12_VERSION,
+        255, 255, 255
+      }
+    },
 
     // Network
     {
       0x00,
       { 0x72, 0x65, 0x64, 0x64, 0x69, 0x74 },
-      IPAddress(192, 168, 23, 100),
-      IPAddress(192, 168, 24, 84),
-      IPAddress(192, 168, 23, 1),
-      IPAddress(255, 255, 255, 0)
+      0xc0a81764, // 192.168.23.100
+      0xc0a81854, // 192.168.24.84
+      0xc0a81701, // 192.168.23.1
+      0xffffff00  // 255.255.255.0
     },
 
     // NTP

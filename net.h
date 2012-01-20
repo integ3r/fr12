@@ -25,12 +25,13 @@ class EthernetClient;
 
 // FR 12 classes
 class fr12_net;
+class fr12_config;
 
 // Serialization structs
 struct fr12_net_serialized;
 
 // HTTP handler callback
-typedef void (fr12_union_station::*fr12_http_callback)(fr12_net *, EthernetClient *, char *);
+typedef void (fr12_union_station::*fr12_http_callback)(EthernetClient *, char *);
 
 // Defaults
 enum {
@@ -54,8 +55,12 @@ public:
   
   // Initializers
   void begin(fr12_union_station *union_station);
+  
+  // Starts up Ethernet
   uint8_t begin_ethernet_dhcp();
   void begin_ethernet_static();
+  
+  // Starts up HTTP
   void begin_http(fr12_http_callback handler);
   
   // Gets addresses, subnet mask, etc
