@@ -55,6 +55,9 @@ class fr12_countdown;
 // Serialization structs
 struct fr12_union_station_serialized;
 
+// Config write callback
+typedef void (fr12_config::*fr12_config_write_callback)(void *);
+
 // HTTP set callback
 typedef void (fr12_union_station::*fr12_union_station_http_get_callback)(void *, EthernetClient *);
 typedef void (fr12_union_station::*fr12_union_station_http_set_callback)(void *, void *, char *, char *);
@@ -96,17 +99,30 @@ private:
   void http_get_time(void *ee, EthernetClient *client);
   
   // HTTP setters
-  template <typename T, typename U> void http_set(fr12_union_station_http_set_callback callback, T *module, char *query) {
+  template <typename T, typename U> void http_set(fr12_union_station_http_set_callback callback, fr12_config_write_callback write, T *module, char *query) {
+    // Desired and previous configuration
     U var, old_var;
-    module->serialize(&var);
-    memcpy(&old_var, &var, sizeof(U));
+    
+    // Serialize the module into the old configuration
+    module->serialize(&old_var);
+    
+    // Copy it into the new configuration
+    memcpy(&var, &old_var, sizeof(U));
+    
+    // Break up the query
     query = strtok(this->do_find_query(query), "&");
     
+    // Edit configuration variables
     while (query != NULL) {
       char *key, *value;
       this->do_break_query(query, &key, &value);
       ((this)->*(callback))(&var, &old_var, key, value);
       query = strtok(NULL, "&");
+    }
+    
+    // Write configuration (if necessary)
+    if (memcmp(&var, &old_var, sizeof(U)) != 0) {
+      ((this->config)->*(write))(&var);
     }
   }
   

@@ -13,7 +13,7 @@
 #include "net.h"
 
 // FR 12 classes
-class fr12_union_station;
+class fr12_config;
 
 // FR 12 structs
 struct fr12_lcd_message;
@@ -103,11 +103,11 @@ protected:
   
   // Writers
   void write_header(fr12_eeprom_header *header);
-  void write_union_station(fr12_union_station_serialized *union_station);
-  void write_lcd(fr12_lcd_serialized *lcd);
-  void write_net(fr12_net_serialized *net);
-  void write_ntp(fr12_ntp_serialized *ntp);
-  void write_time(fr12_time_serialized *time);
+  void write_union_station(void *ptr);
+  void write_lcd(void *ptr);
+  void write_net(void *ptr);
+  void write_ntp(void *ptr);
+  void write_time(void *ptr);
 private:
   uint8_t *read(size_t len, size_t offset);
   void write(uint8_t *ptr, size_t len, size_t offset);

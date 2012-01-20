@@ -80,10 +80,10 @@ void fr12_config::reset() {
     {
       0x00,
       { 0x72, 0x65, 0x64, 0x64, 0x69, 0x74 },
-      0xc0a81764, // 192.168.23.100
-      0xc0a81854, // 192.168.24.84
-      0xc0a81701, // 192.168.23.1
-      0xffffff00  // 255.255.255.0
+      0x6417a8c0, // 192.168.23.100
+      0x5418a8c0, // 192.168.24.84
+      0x0117a8c0, // 192.168.23.1
+      0x00ffffff  // 255.255.255.0
     },
 
     // NTP
@@ -130,27 +130,32 @@ void fr12_config::write_header(fr12_eeprom_header *header) {
   this->write((uint8_t *)header, sizeof(fr12_eeprom_header), offsetof(fr12_eeprom, header));
 }
 
-void fr12_config::write_union_station(fr12_union_station_serialized *union_station) {
+void fr12_config::write_union_station(void *ptr) {
+  fr12_union_station_serialized *union_station = (fr12_union_station_serialized *)ptr;
   this->union_station->configure(union_station);
   this->write((uint8_t *)union_station, sizeof(fr12_union_station_serialized), offsetof(fr12_eeprom, union_station));
 }
 
-void fr12_config::write_lcd(fr12_lcd_serialized *lcd) {
+void fr12_config::write_lcd(void *ptr) {
+  fr12_lcd_serialized *lcd = (fr12_lcd_serialized *)ptr;
   this->union_station->lcd->configure(lcd);
   this->write((uint8_t *)lcd, sizeof(fr12_lcd_serialized), offsetof(fr12_eeprom, lcd));
 }
 
-void fr12_config::write_net(fr12_net_serialized *net) {
+void fr12_config::write_net(void *ptr) {
+  fr12_net_serialized *net = (fr12_net_serialized *)ptr;
   this->union_station->net->configure(net);
   this->write((uint8_t *)net, sizeof(fr12_net_serialized), offsetof(fr12_eeprom, net));
 }
 
-void fr12_config::write_ntp(fr12_ntp_serialized *ntp) {
+void fr12_config::write_ntp(void *ptr) {
+  fr12_ntp_serialized *ntp = (fr12_ntp_serialized *)ptr;
   this->union_station->ntp->configure(ntp);
   this->write((uint8_t *)ntp, sizeof(fr12_ntp_serialized), offsetof(fr12_eeprom, ntp));
 }
 
-void fr12_config::write_time(fr12_time_serialized *time) {
+void fr12_config::write_time(void *ptr) {
+  fr12_time_serialized *time = (fr12_time_serialized *)ptr;
   this->union_station->time->configure(time);
   this->write((uint8_t *)time, sizeof(fr12_time_serialized), offsetof(fr12_eeprom, time));
 }

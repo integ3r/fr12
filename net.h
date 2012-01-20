@@ -79,6 +79,7 @@ public:
   void http_unescape(char *s);
 private:
   void http_send_headers(EthernetClient *client, uint16_t response_code, const char *content_type, const char **headers = NULL, size_t header_length = 0);
+  void http_send_response(EthernetClient *client, uint16_t response_code);
   int http_unhex(char c);
   
   static const uint16_t http_codes[] PROGMEM;

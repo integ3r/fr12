@@ -9,7 +9,8 @@
 
 extern EthernetClass Ethernet;
 
-const uint16_t fr12_net::http_codes[] = {200, 400, 403, 404, 413, 500};
+const uint16_t fr12_net::http_codes[] = {
+  200, 400, 403, 404, 413, 500};
 const char fr12_net::http_response_ok[] = "OK";
 const char fr12_net::http_response_bad_request[] = "Bad Request";
 const char fr12_net::http_response_forbidden[] = "Forbidden";
@@ -168,9 +169,12 @@ void fr12_net::handle_http() {
 }
 
 void fr12_net::http_send_headers(EthernetClient *client, uint16_t response_code, const char *content_type, const char **headers, size_t header_length) {
-  // We're using HTTP 1.1.
+  // We're using HTTP 1.1. Send "HTTP/1.1 <code> <stringified code>"
   client->print("HTTP/1.1 ");
-  client->println(response_code);
+  client->print(response_code);
+  client->write(' ');
+  this->http_send_response(client, response_code);
+  client->println();
 
   // Print headers
   client->println("Server: Froshduino/" FR12_VERSION);
@@ -188,6 +192,31 @@ void fr12_net::http_send_headers(EthernetClient *client, uint16_t response_code,
   client->println();
 }
 
+void fr12_net::http_send_response(EthernetClient *client, uint16_t response_code) {
+  // Convert the response code into text
+  for (size_t a = 0; a < sizeof(this->http_codes); a++) {
+    uint16_t code = pgm_read_word(&this->http_codes[a]);
+    if (code == response_code) {
+      // Read the pointer to the response string
+      PGM_P p = (PGM_P)pgm_read_word(&this->http_responses[a]);
+
+      // Allocate memory to hold the response
+      size_t len = strlen_P(p);
+      char *code_str = (char *)calloc(len + 1, sizeof(char));
+
+      // Copy the data at the pointer into the buffer
+      strncpy_P(code_str, p, len);
+
+      // Print the code string
+      client->print(code_str);
+
+      // Free memory
+      free(code_str);
+      break;
+    }
+  }
+}
+
 void fr12_net::http_respond(EthernetClient *client, uint16_t response_code, const char *data, size_t data_length, const char **headers, size_t header_length) {
   this->http_send_headers(client, response_code, "text/html", headers, header_length);
   if (data_length == 0) {
@@ -201,32 +230,11 @@ void fr12_net::http_respond(EthernetClient *client, uint16_t response_code, cons
     }
   } 
   else {
-    // Convert the response code into text
-    for (size_t a = 0; a < sizeof(this->http_codes); a++) {
-      uint16_t code = pgm_read_word(&this->http_codes[a]);
-      if (code == response_code) {
-        // Read the pointer to the response string
-        PGM_P p = (PGM_P)pgm_read_word(&this->http_responses[a]);
-
-        // Allocate memory to hold the response
-        size_t len = strlen_P(p);
-        char *code_str = (char *)calloc(len + 1, sizeof(char));
-
-        // Copy the data at the pointer into the buffer
-        strncpy_P(code_str, p, len);
-
-        // Put it in one gigantic <h1> block, e.g. "404 - Not Found"
-        client->print("<h1>");
-        client->print(code);
-        client->print(" - ");
-        client->print(code_str);
-        client->println("</h1>");
-
-        // Free memory
-        free(code_str);
-        break;
-      }
-    }
+    client->print("<h1>");
+    client->print(response_code);
+    client->print(" - ");
+    this->http_send_response(client, response_code);
+    client->print("</h1>");
   }
 
   client->println();
@@ -255,30 +263,30 @@ void fr12_net::http_respond_json(EthernetClient *client, uint16_t response_code,
       // Loop through the current string
       for (size_t k = 0; k < sz; k++) {
         switch (data[i][k]) {
-        case '"':
-        case '\\':
-        case '/':
-          // Designed to fall through so we write the slash and THEN the special character
-          client->write('\\');
-        default:
-          // ... or, just the character
-          client->write(data[i][k]);
-          break;
-        case '\b':
-          client->print("\\b");
-          break;
-        case '\f':
-          client->print("\\f");
-          break;
-        case '\n':
-          client->print("\\n");
-          break;
-        case '\r':
-          client->print("\\r");
-          break;
-        case '\t':
-          client->print("\\t");
-          break;
+          case '"':
+          case '\\':
+          case '/':
+            // Designed to fall through so we write the slash and THEN the character
+            client->write('\\');
+          default:
+            // ... or, just the character
+            client->write(data[i][k]);
+            break;
+          case '\b':
+            client->print("\\b");
+            break;
+          case '\f':
+            client->print("\\f");
+            break;
+          case '\n':
+            client->print("\\n");
+            break;
+          case '\r':
+            client->print("\\r");
+            break;
+          case '\t':
+            client->print("\\t");
+            break;
         }
       }
 
@@ -335,6 +343,7 @@ void fr12_net::http_unescape(char *s) {
 int fr12_net::http_unhex(char c) {
   return c >= '0' && c <= '9' ? c - '0' : c >= 'A' && c <= 'F' ? c - 'A' + 10 : c - 'a' + 10;
 }
+
 
 
 

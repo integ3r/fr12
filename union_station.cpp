@@ -257,27 +257,27 @@ void fr12_union_station::http_handler(EthernetClient *client, char *path) {
     else if (strcasecmp_P(path, PSTR("set")) == 0) {
       if ((path = strtok(NULL, "/?")) != NULL) {
         if (strcasecmp_P(path, PSTR("countdown")) == 0) {
-          this->http_set<fr12_union_station, fr12_union_station_serialized>(&fr12_union_station::http_set_countdown, this, path);
+          this->http_set<fr12_union_station, fr12_union_station_serialized>(&fr12_union_station::http_set_countdown, &fr12_config::write_union_station, this, path);
           this->http_get<fr12_union_station, fr12_union_station_serialized>(&fr12_union_station::http_get_countdown, this, client);
           return;
         }
         else if (strcasecmp_P(path, PSTR("lcd")) == 0) {
-          this->http_set<fr12_lcd, fr12_lcd_serialized>(&fr12_union_station::http_set_lcd, this->lcd, path);
+          this->http_set<fr12_lcd, fr12_lcd_serialized>(&fr12_union_station::http_set_lcd, &fr12_config::write_lcd, this->lcd, path);
           this->http_get<fr12_lcd, fr12_lcd_serialized>(&fr12_union_station::http_get_lcd, this->lcd, client);
           return;
         }
         else if (strcasecmp_P(path, PSTR("net")) == 0) {
-          this->http_set<fr12_net, fr12_net_serialized>(&fr12_union_station::http_set_net, this->net, path);
+          this->http_set<fr12_net, fr12_net_serialized>(&fr12_union_station::http_set_net, &fr12_config::write_net, this->net, path);
           this->http_get<fr12_net, fr12_net_serialized>(&fr12_union_station::http_get_net, this->net, client);
           return;
         }
         else if (strcasecmp_P(path, PSTR("ntp")) == 0) {
-          this->http_set<fr12_ntp, fr12_ntp_serialized>(&fr12_union_station::http_set_ntp, this->ntp, path);
+          this->http_set<fr12_ntp, fr12_ntp_serialized>(&fr12_union_station::http_set_ntp, &fr12_config::write_ntp, this->ntp, path);
           this->http_get<fr12_ntp, fr12_ntp_serialized>(&fr12_union_station::http_get_ntp, this->ntp, client);
           return;
         }
         else if (strcasecmp_P(path, PSTR("time")) == 0) {
-          this->http_set<fr12_time, fr12_time_serialized>(&fr12_union_station::http_set_time, this->time, path);
+          this->http_set<fr12_time, fr12_time_serialized>(&fr12_union_station::http_set_time, &fr12_config::write_time, this->time, path);
           this->http_get<fr12_time, fr12_time_serialized>(&fr12_union_station::http_get_time, this->time, client);
           return;
         }
@@ -361,7 +361,6 @@ void fr12_union_station::http_get_time(void *ee, EthernetClient *client) {
 }
 
 void fr12_union_station::http_set_countdown(void *ee_new, void *ee_old, char *key, char *value) {
-  // Get a serialized copy of the Union Station configuration
   fr12_union_station_serialized *us_new = (fr12_union_station_serialized *)ee_new;
   fr12_union_station_serialized *us_old = (fr12_union_station_serialized *)ee_old;
 
