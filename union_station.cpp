@@ -385,6 +385,7 @@ void fr12_union_station::http_set_countdown(void *ee_new, void *ee_old, char *ke
     us_new->countdown_to = strtoul(value, NULL, 0);
     if (us_new->countdown_to < this->time->now()) {
       us_new->countdown_to = us_old->countdown_to;
+      this->flags &= ~fr12_union_station_complete;
     }
   }
 }
