@@ -36,7 +36,8 @@ enum {
 // Flags
 enum {
   fr12_union_station_time_inaccurate = (1 << 0),
-  fr12_union_station_colon = (1 << 1)
+  fr12_union_station_colon = (1 << 1),
+  fr12_union_station_complete = (1 << 2)
 };
 
 // Built-in classes

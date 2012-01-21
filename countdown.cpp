@@ -21,7 +21,8 @@ void fr12_countdown::update(fr12_time *time) {
   // Take the difference between now and the timestamp
   uint32_t s = this->timestamp - time->now(), m, h;
   
-  if (s == 0) {
+  // We WANT this counter to roll over (one below zero) - then we're sure that the countdown is done
+  if (s == 0xffffffff) {
     this->days = this->hours = this->mins = this->secs = this->millis = 0;
     this->reached = 1;
     return;

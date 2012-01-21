@@ -152,11 +152,21 @@ void fr12_union_station::loop() {
 
     // Are we there yet?
     if (this->countdown->target_reached()) {
-      // boom shaka laka
+      // Make a LCD message
+      fr12_lcd_message message;
+      strncpy((char *)&message.text, "FR 2012\nHoist the sails", sizeof(message.text));
+      message.r = message.g = message.b = 255;
+      this->lcd->set_message(&message);
+      
+      // Clear areas
       this->glcd->countdown->ClearArea();
+      this->glcd->caption->ClearArea();
+      this->glcd->status->ClearArea();
 
-      // font optimization
-      this->glcd->countdown->Puts_P(PSTR(" RIGHT NOW!"));
+      // Update the text
+      this->glcd->countdown->Puts_P(PSTR("  RIGHT NOW!"));
+      this->glcd->caption->Puts_P(PSTR("IT'S HERE!"));
+      this->glcd->status->Puts_P(PSTR("Enjoy the retreat!"));
     } 
     else {
       // Start at the beginning of the string
@@ -205,8 +215,12 @@ void fr12_union_station::sync_handler() {
   // Toggle the heartbeat LED
   PORTB ^= _BV(PB7);
 
-  // Toggle the colon
-  this->flags ^= fr12_union_station_colon;
+  if (this->flags & fr12_union_station_complete) {
+    
+  } else {
+    // Toggle the colon
+    this->flags ^= fr12_union_station_colon;
+  }
 
   // Increment sync index
   this->sync_index++;

@@ -144,7 +144,7 @@ void fr12_lcd::putc_wrap(char c) {
   this->hw->write(c);
 
   // Increment X and/or Y
-  if (++this->x >= fr12_lcd_width) {
+  if (++this->x >= fr12_lcd_width || c == '\n') {
     this->x = 0;
     this->hw->setCursor(this->x, ++this->y);
   }
