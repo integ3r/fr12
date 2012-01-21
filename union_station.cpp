@@ -164,7 +164,11 @@ void fr12_union_station::loop() {
       message.r = 255;
       message.g = message.b = 0;
       
-      // Set the LCD
+      // Clear the caption
+      this->glcd->caption->ClearArea();
+      
+      // Set the LCDs
+      this->glcd->caption->Puts_P(PSTR("IT'S HERE!"));
       this->lcd->set_message(&message);
       
       // We're done!
