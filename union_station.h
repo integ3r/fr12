@@ -134,6 +134,7 @@ private:
   void http_set_time(void *ee_new, void *ee_old, char *key, char *value);
   
   // Utilities
+  void do_redraw_screen();
   void do_status_reset();
   void do_sync_ntp();
   

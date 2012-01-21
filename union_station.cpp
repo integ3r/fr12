@@ -135,11 +135,7 @@ void fr12_union_station::setup() {
   this->net->begin_http(&fr12_union_station::http_handler);
 
   // Switch to the main loop. Clear the screen and all areas.
-  this->glcd->hw->ClearScreen();
-  this->glcd->status->ClearArea();
-  this->glcd->title->Puts_P(PSTR("FR 12"));
-  this->glcd->caption->Puts_P(PSTR("COUNTDOWN!"));
-  this->do_status_reset();
+  this->do_redraw_screen();
 }
 
 void fr12_union_station::loop() {
@@ -156,6 +152,9 @@ void fr12_union_station::loop() {
 
     // The countdown just finished. Update the message.
     if (this->countdown->target_reached() && !(this->flags & fr12_union_station_complete)) {
+      // We're done!
+      this->flags |= fr12_union_station_complete;
+      
       // Make a LCD message
       fr12_lcd_message message;
       strncpy((char *)&message.text, "FR 2012\nHoist the sails", sizeof(message.text));
@@ -164,15 +163,14 @@ void fr12_union_station::loop() {
       message.r = 255;
       message.g = message.b = 0;
       
-      // Clear the caption
-      this->glcd->caption->ClearArea();
+      // Totally redraw the screen
+      this->do_redraw_screen();
       
-      // Set the LCDs
-      this->glcd->caption->Puts_P(PSTR("IT'S HERE!"));
+      // Zero out the countdown
+      this->glcd->countdown->Puts_P(PSTR(" 00:00:00:00.00"));
+      
+      // Set the message on the text LCD
       this->lcd->set_message(&message);
-      
-      // We're done!
-      this->flags |= fr12_union_station_complete;
     }
     
     // Otherwise, update the countdown
@@ -182,7 +180,7 @@ void fr12_union_station::loop() {
       this->glcd->countdown->write(' ');
 
       // Display results based upon colon
-      if (this->flags & fr12_union_station_colon || this->countdown->target_reached()) {
+      if (this->flags & fr12_union_station_colon) {
         this->glcd->countdown->Printf_P(PSTR("%.2u:%.2u:%.2u:%.2u.%.2u"), this->countdown->days, this->countdown->hours, this->countdown->mins, this->countdown->secs, this->countdown->millis / 10);
       } 
       else {
@@ -464,6 +462,28 @@ void fr12_union_station::http_set_time(void *ee_new, void *ee_old, char *key, ch
   else if (strcasecmp_P(key, PSTR("sync_interval")) == 0) {
     time_new->sync_interval = strtoul(value, NULL, 0);
   }
+}
+
+void fr12_union_station::do_redraw_screen() {
+  // Clear the screen and all areas
+  this->glcd->title->ClearArea();
+  this->glcd->caption->ClearArea();
+  this->glcd->countdown->ClearArea();
+  this->glcd->status->ClearArea();
+  this->glcd->hw->ClearScreen();
+  
+  // Put the title text up
+  this->glcd->title->Puts_P(PSTR("FR 12"));
+  
+  // Either put "COUNTDOWN!" or "IT'S HERE!" depending on flags
+  if (this->flags & fr12_union_station_complete) {
+    this->glcd->caption->Puts_P(PSTR("IT'S HERE!"));
+  } else {
+    this->glcd->caption->Puts_P(PSTR("COUNTDOWN!"));
+  }
+  
+  // Reset the status
+  this->do_status_reset();
 }
 
 void fr12_union_station::do_status_reset() {
