@@ -295,11 +295,15 @@ void fr12_union_station::http_handler(EthernetClient *client, char *path) {
           return;
         }
       }
+    } else if (strcasecmp_P(path, PSTR("reset")) == 0) {
+      this->config->reset();
+      this->net->http_respond(client, 200);
+      __asm__ __volatile__ ("jmp 0x00");
     }
   }
   
   // Respond 404 otherwise.
-  net->http_respond(client, 404);
+  this->net->http_respond(client, 404);
 }
 
 void fr12_union_station::http_get_countdown(void *ee, EthernetClient *client) {
