@@ -174,7 +174,7 @@ void fr12_union_station::loop() {
     }
     
     // Otherwise, update the countdown
-    else {
+    else if (!this->countdown->target_reached()){
       // Start at the beginning of the string
       this->glcd->countdown->CursorToXY(0, 0);
       this->glcd->countdown->write(' ');
