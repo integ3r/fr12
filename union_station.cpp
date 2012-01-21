@@ -149,7 +149,7 @@ void fr12_union_station::loop() {
   // Process HTTP connections
   this->net->handle_http();
 
-  //
+  // Target not yet reached
   if (!this->countdown->target_reached()) {
     // Update countdown
     this->countdown->update(this->time);
@@ -178,7 +178,7 @@ void fr12_union_station::loop() {
       this->glcd->countdown->write(' ');
 
       // Display results based upon colon
-      if (this->flags & fr12_union_station_colon) {
+      if (this->flags & fr12_union_station_colon || this->countdown->target_reached()) {
         this->glcd->countdown->Printf_P(PSTR("%.2u:%.2u:%.2u:%.2u.%.2u"), this->countdown->days, this->countdown->hours, this->countdown->mins, this->countdown->secs, this->countdown->millis / 10);
       } 
       else {
