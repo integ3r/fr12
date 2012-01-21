@@ -9,6 +9,7 @@
 #include "config.h"
 #include "lcd.h"
 #include "glcd.h"
+#include "minecraft.h"
 #include "net.h"
 #include "ntp.h"
 #include "time.h"
@@ -466,11 +467,11 @@ void fr12_union_station::http_set_time(void *ee_new, void *ee_old, char *key, ch
 
 void fr12_union_station::do_redraw_screen() {
   // Clear the screen and all areas
-  this->glcd->title->ClearArea();
-  this->glcd->caption->ClearArea();
-  this->glcd->countdown->ClearArea();
-  this->glcd->status->ClearArea();
   this->glcd->hw->ClearScreen();
+  this->glcd->title->CursorToXY(fr12_glcd_margin_left, 10);
+  this->glcd->caption->CursorToXY(this->glcd->hw->CenterX + 1, 17);
+  this->glcd->countdown->CursorToXY(0, 0);
+  this->glcd->status->CursorToXY(0, 0);
   
   // Put the title text up
   this->glcd->title->Puts_P(PSTR("FR 12"));
