@@ -141,7 +141,9 @@ void fr12_lcd::puts_wrap(char *s, size_t len) {
 
 void fr12_lcd::putc_wrap(char c) {
   // Write the character
-  this->hw->write(c);
+  if (c != '\n') {
+    this->hw->write(c);
+  }
 
   // Increment X and/or Y
   if (++this->x >= fr12_lcd_width || c == '\n') {

@@ -145,29 +145,33 @@ void fr12_union_station::setup() {
 void fr12_union_station::loop() {
   // Update time
   this->time->update();
+  
+  // Process HTTP connections
+  this->net->handle_http();
 
+  //
   if (!this->countdown->target_reached()) {
     // Update countdown
     this->countdown->update(this->time);
 
-    // Are we there yet?
-    if (this->countdown->target_reached()) {
+    // The countdown just finished. Update the message.
+    if (this->countdown->target_reached() && !(this->flags & fr12_union_station_complete)) {
       // Make a LCD message
       fr12_lcd_message message;
       strncpy((char *)&message.text, "FR 2012\nHoist the sails", sizeof(message.text));
-      message.r = message.g = message.b = 255;
+      
+      // Make it red
+      message.r = 255;
+      message.g = message.b = 0;
+      
+      // Set the LCD
       this->lcd->set_message(&message);
       
-      // Clear areas
-      this->glcd->countdown->ClearArea();
-      this->glcd->caption->ClearArea();
-      this->glcd->status->ClearArea();
-
-      // Update the text
-      this->glcd->countdown->Puts_P(PSTR("  RIGHT NOW!"));
-      this->glcd->caption->Puts_P(PSTR("IT'S HERE!"));
-      this->glcd->status->Puts_P(PSTR("Enjoy the retreat!"));
-    } 
+      // We're done!
+      this->flags |= fr12_union_station_complete;
+    }
+    
+    // Otherwise, update the countdown
     else {
       // Start at the beginning of the string
       this->glcd->countdown->CursorToXY(0, 0);
@@ -182,10 +186,6 @@ void fr12_union_station::loop() {
       }
     }
   }
-
-
-  // Process Ethernet connections
-  this->net->handle_http();
 }
 
 void fr12_union_station::configure(fr12_union_station_serialized *ee) {
@@ -215,12 +215,8 @@ void fr12_union_station::sync_handler() {
   // Toggle the heartbeat LED
   PORTB ^= _BV(PB7);
 
-  if (this->flags & fr12_union_station_complete) {
-    
-  } else {
-    // Toggle the colon
-    this->flags ^= fr12_union_station_colon;
-  }
+  // Toggle the colon
+  this->flags ^= fr12_union_station_colon;
 
   // Increment sync index
   this->sync_index++;
