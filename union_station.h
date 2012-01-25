@@ -17,11 +17,8 @@ enum {
   // Configuration write interval
   fr12_union_station_config_write_interval = 5,
   
-  // NTP sync interval
-  fr12_union_station_ntp_sync_interval = 3600,
-  
   // NTP try timeout
-  fr12_union_station_ntp_timeout = 1000,
+  fr12_union_station_ntp_timeout = 1500,
   
   // Max NTP tries
   fr12_union_station_sync_max_tries = 5,

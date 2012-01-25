@@ -201,13 +201,6 @@ void fr12_union_station::serialize(fr12_union_station_serialized *ee) {
 }
 
 void fr12_union_station::sync_handler() {
-  // Sync with NTP if we need to
-  if (this->sync_index % fr12_union_station_ntp_sync_interval == 0) {
-    this->do_sync_ntp();
-    this->do_status_reset();
-    this->sync_index = 0;
-  } 
-
   // Serialize the current time and write it to EEPROM if we need to as well
   if (this->sync_index % fr12_union_station_config_write_interval == 0) {
     fr12_time_serialized t;
@@ -386,6 +379,7 @@ void fr12_union_station::http_set_countdown(void *ee_new, void *ee_old, char *ke
     if (us_new->countdown_to < this->time->now()) {
       us_new->countdown_to = us_old->countdown_to;
       this->flags &= ~fr12_union_station_complete;
+      this->do_redraw_screen();
     }
   }
 }
@@ -463,6 +457,8 @@ void fr12_union_station::http_set_time(void *ee_new, void *ee_old, char *key, ch
     time_new->seconds = strtoul(value, NULL, 0);
     if (time_new->seconds < this->countdown->get_timestamp()) {
       time_new->seconds = time_old->seconds;
+      this->flags &= ~fr12_union_station_complete;
+      this->do_redraw_screen();
     }
   } 
   else if (strcasecmp_P(key, PSTR("sync_interval")) == 0) {
@@ -510,7 +506,7 @@ void fr12_union_station::do_sync_ntp() {
   while (t == 0 && tries < fr12_union_station_sync_max_tries) {
     this->glcd->status->ClearArea();
     if (this->ntp->get_hostname() != NULL) {
-      this->glcd->status->Printf_P(PSTR("%s (%u)"), this->ntp->get_hostname(), ++tries);
+      this->glcd->status->Printf_P(PSTR("%s [%u]"), this->ntp->get_hostname(), ++tries);
     }
 
     // Send a packet
@@ -530,7 +526,7 @@ void fr12_union_station::do_sync_ntp() {
     if (t > 0) {
       int32_t delta = t - this->time->now();
       this->time->set(t);
-      this->glcd->status->Printf_P(PSTR("Delta: %+lds"), delta);
+      this->glcd->status->Printf_P(PSTR("Offset: %+lds"), delta);
       this->flags &= ~fr12_union_station_time_inaccurate;
     }
   }
